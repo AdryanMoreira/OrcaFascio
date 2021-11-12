@@ -35,6 +35,13 @@ namespace OrcaFascio.Service
                 }
             }
 
+            //Tarefas sem composicao vao ser consideradas como cotacao
+            if (tarefa.IdCmp != null)
+            {
+                tarefa.UtilizarValor = 0;
+                tarefa.Valor = null;
+            }
+
             return Repository.Add(tarefa);
         }
     }

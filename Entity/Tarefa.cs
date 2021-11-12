@@ -7,7 +7,7 @@ namespace OrcaFascio.Entity
     public class Tarefa : EntityBase
     {
 
-        public bool UtilizarValor { get; set; }
+        public int UtilizarValor { get; set; }
 
         public bool IsTarefaPrj { get; set; }
 

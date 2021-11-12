@@ -33,7 +33,10 @@ namespace OrcaFascio.Repository
                         RATEADO,
                         RECCREATEDBY,
                         RECCREATEDON,
-                        SERVICO
+                        SERVICO,
+                        UTILIZARVALOR,
+                        VALOR,
+                        VALORUNIT
                     )
                     VALUES(
                         1,
@@ -51,7 +54,10 @@ namespace OrcaFascio.Repository
                         0,
                         @USUARIO,
                         @DATAATUAL,
-                        @SERVICO
+                        @SERVICO,
+                        @UTILIZARVALOR,
+                        @VALOR,
+                        @VALOR
                     )";
 
                     i = conexao.Execute(query, tarefa, transaction: trans);

@@ -247,6 +247,13 @@ namespace OrcaFascio
 
                             tarefa.CodTrf = tarefaPrj.CodTrf + "." + tarefa.CodTrf;
 
+                            if (tarefa.Quantidade != null & tarefa.CodUnd != null)
+                            {
+                                tarefa.Servico = 1;
+                                tarefa.UtilizarValor = 1;
+                                tarefa.Valor = Convert.ToDouble(dtOrcamento.Rows[i].ItemArray[columnOrcValorUnit]);
+                            }
+
                             projeto.Tarefas.Add(tarefa);
                         }
                     }
