@@ -7,6 +7,10 @@ namespace OrcaFascio.Entity
     public class Tarefa : EntityBase
     {
 
+        public bool UtilizarValor { get; set; }
+
+        public bool IsTarefaPrj { get; set; }
+
         public string CodCmp { get; set; }
 
         public int CodColigada { get; set; }
@@ -29,7 +33,7 @@ namespace OrcaFascio.Entity
 
         public int? IdPai { get; set; }
 
-        public double? CustoUnit { get; set; }
+        public double? Valor { get; set; }
 
         public int Servico { get; set; }
 

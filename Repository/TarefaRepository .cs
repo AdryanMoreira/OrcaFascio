@@ -22,7 +22,6 @@ namespace OrcaFascio.Repository
                         CODCOLIGADA,
                         CODTRF,
                         CODUND,
-                        CUSTOUNIT,
                         DESCRICAO,
                         IDCMP,
                         IDPAI,
@@ -41,7 +40,6 @@ namespace OrcaFascio.Repository
                         @CODCOLIGADA,
                         @CODTRF,
                         @CODUND,
-                        @CUSTOUNIT,
                         UPPER(SUBSTRING(@DESCRICAO, 1, 253)),
                         @IDCMP,
                         @IDPAI,
@@ -90,17 +88,6 @@ namespace OrcaFascio.Repository
             AND CODTRF = LTRIM(RTRIM(@CODTRF))";
 
             return base.GetById(query, tarefa);
-        }
-
-        public override int Update(Tarefa tarefa)
-        {
-            var query = $@"
-            UPDATE MTAREFA
-            SET MTAREFA.IDPAI = @IDPAI
-            WHERE MTAREFA.CODCOLIGADA = @CODCOLIGADA
-            AND MTAREFA.IDTRF = @IDTRF";
-
-            return base.Update(query, tarefa);
         }
     }
 }

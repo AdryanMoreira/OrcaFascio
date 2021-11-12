@@ -6,10 +6,10 @@ using System.Text;
 using System.Windows.Forms;
 using System.Data.OleDb;
 using OrcaFascio.Entity;
-using OrcaFascio.Util;
 using OrcaFascio.Repository;
 using System.Diagnostics;
 using OrcaFascio.Service;
+using OrcaFascio.Presentation;
 
 namespace OrcaFascio
 {
@@ -54,6 +54,7 @@ namespace OrcaFascio
             tarefaRepository = new TarefaRepository();
             tarefaService = new TarefaService(tarefaRepository, autoincrementoService);
 
+
             this.Text = string.Format("OrçaFascio x {0}", coligadaRepository.GetDatabaseName()); 
 
             LimparCampos();
@@ -63,9 +64,15 @@ namespace OrcaFascio
 
         private void btnImportar_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show(string.Format("Todas as composições e insumos do projeto {0} serão excluídos. Deseja continuar?", cmbProjetos.Items[cmbProjetos.SelectedIndex]), "Confirmação", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+           
+            if (ValidarCampos() && MessageBox.Show(string.Format("Todas as composições e insumos do projeto {0} serão excluídos. Deseja continuar?", cmbProjetos.Items[cmbProjetos.SelectedIndex]), "Confirmação", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                
+
+                if (new PasswordForm().ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
                 try
                 {
                     Cursor.Current = Cursors.WaitCursor;
@@ -178,6 +185,15 @@ namespace OrcaFascio
                         }
                     }
 
+                    Tarefa tarefaPrj = new Tarefa();
+                    tarefaPrj.CodColigada = projeto.CodColigada;
+                    tarefaPrj.IdPrj = projeto.IdPrj;
+                    tarefaPrj.Nome = tarefaPrj.Descricao = projeto.Descricao;
+                    tarefaPrj.Quantidade = 1;
+                    tarefaPrj.CodTrf = "001";
+                    tarefaPrj.CodTrfPai = tarefaPrj.CodTrf;
+                    tarefaPrj.IsTarefaPrj = true;
+
                     //Planilha Orcamento
                     Tarefa primeiraTarefa = null;
                     for (int i = 0; i < dtOrcamento.Rows.Count; i++)
@@ -190,6 +206,7 @@ namespace OrcaFascio
                         int columnOrcdescricao = 3;
                         int columnOrcund = 4;
                         int columnOrcquant = 5;
+                        int columnOrcValorUnit = 6;
                         decimal aux = 0;
 
                         if (decimal.TryParse(dtOrcamento.Rows[i].ItemArray[columnOrcItem].ToString(), out aux))
@@ -213,25 +230,22 @@ namespace OrcaFascio
                             tarefa.IdPrj = projeto.IdPrj;
                             tarefa.Descricao = tarefa.Nome = dtOrcamento.Rows[i].ItemArray[columnOrcdescricao].ToString().Trim();
 
-                            if (projeto.Tarefas.Count == 0)
+                            if (dtOrcamento.Rows[i].ItemArray[columnOrcItem].ToString().Trim().Length == 1)
                             {
-                                tarefa.Quantidade = 1;
                                 primeiraTarefa = tarefa;
                                 primeiraTarefa.CodTrf = tarefa.CodTrf = Mask(dtOrcamento.Rows[i].ItemArray[columnOrcItem].ToString().Trim());
-                                tarefa.CodTrfPai = tarefa.CodTrf;
                             }
                             else
                             {
-                                tarefa.CodTrf = Mask(primeiraTarefa.CodTrf +"."+ dtOrcamento.Rows[i].ItemArray[columnOrcItem].ToString().Trim()); 
+                                tarefa.CodTrf = Mask(dtOrcamento.Rows[i].ItemArray[columnOrcItem].ToString().Trim()); 
                             }
                             
-
                             if (!string.IsNullOrWhiteSpace(dtOrcamento.Rows[i].ItemArray[columnOrccodigo].ToString()))
                             {
                                 tarefa.CodCmp = dtOrcamento.Rows[i].ItemArray[columnOrccodigo].ToString().Trim();
                             }
 
-                            tarefa.CustoUnit = 0;
+                            tarefa.CodTrf = tarefaPrj.CodTrf + "." + tarefa.CodTrf;
 
                             projeto.Tarefas.Add(tarefa);
                         }
@@ -242,6 +256,7 @@ namespace OrcaFascio
                         int qtd = 0;
 
                         projetoRepository.LimparProjeto(projeto);
+
                         foreach (var item in projeto.Insumos)
                         {
                             qtd += insumoService.Add(item);
@@ -257,6 +272,9 @@ namespace OrcaFascio
                                 qtd += recursoService.Add(recurso);
                             }
                         }
+                        
+                        tarefaService.Add(tarefaPrj);
+
                         foreach (var item in projeto.Tarefas)
                         {
                             tarefaService.Add(item);
@@ -319,12 +337,38 @@ namespace OrcaFascio
                     File.Delete(strTempFile);
             }
         }
+
         public void LimparCampos()
         {
             this.cmbColigadas.Items.Clear();
-            this.cmbFiliais.Items.Clear();
             this.cmbProjetos.Items.Clear();
 
+        }
+
+        public bool ValidarCampos()
+        {
+
+            string msg ="";
+            bool ok = false;
+            
+            if(cmbColigadas.SelectedIndex == -1)
+                msg = "Informe a coligada.\n";
+
+            if (cmbProjetos.SelectedIndex == -1)
+                msg += "Informe o projeto.\n";
+
+            if (txtCaminhoArquivoComposicoes.Text.Length == 0)
+                msg += "Informe o caminho da planilha de composições.\n";
+
+            if (txtCaminhoArquivoOrcamento.Text.Length == 0)
+                msg += "Informe o caminho da planilha orçamentária.";
+
+            ok = string.IsNullOrWhiteSpace(msg);
+
+            if(ok == false)
+                MessageBox.Show(msg, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            
+            return ok;
         }
 
         private void cmbColigadas_SelectedIndexChanged(object sender, System.EventArgs e)
@@ -332,16 +376,7 @@ namespace OrcaFascio
             if (cmbColigadas.Items.Count > 0)
             {
                 Coligada s = (Coligada)cmbColigadas.Items[cmbColigadas.SelectedIndex];
-                CarregarFiliais(s.CodColigada);
-            }
-        }
-
-        private void cmbFiliais_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            if (cmbFiliais.Items.Count > 0)
-            {
-                Filial filial = (Filial)cmbFiliais.Items[cmbFiliais.SelectedIndex];
-                CarregarProjetos(filial.CodColigada, filial.CodFilial);
+                CarregarProjetos(s.CodColigada);
             }
         }
 
@@ -355,23 +390,12 @@ namespace OrcaFascio
             }
         }
 
-        public void CarregarFiliais(int codColigada)
-        {
-
-            this.cmbFiliais.Items.Clear();
-
-            foreach (var item in filialRepository.GetByColigada(codColigada))
-            {
-                this.cmbFiliais.Items.Add(item);
-            }
-        }
-
-        public void CarregarProjetos(int codColigada, int codFilial)
+        public void CarregarProjetos(int codColigada)
         {
 
             this.cmbProjetos.Items.Clear();
 
-            foreach (var item in projetoRepository.GetByFilial(codColigada, codFilial))
+            foreach (var item in projetoRepository.GetByColigada(codColigada))
             {
                 this.cmbProjetos.Items.Add(item);
             }
@@ -381,6 +405,7 @@ namespace OrcaFascio
         {
             DataTable dtResult = null;
             int totalSheet = 0; //No of sheets on excel file  
+
             using (OleDbConnection objConn = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + FileName + ";Extended Properties='Excel 12.0;HDR=No;IMEX=1;';"))
             {
                 objConn.Open();
@@ -392,8 +417,8 @@ namespace OrcaFascio
                 if (dt != null)
                 {
                     var tempDataTable = (from dataRow in dt.AsEnumerable()
-                                         where !dataRow["TABLE_NAME"].ToString().Contains("FilterDatabase")
-                                         select dataRow).CopyToDataTable();
+                                            where !dataRow["TABLE_NAME"].ToString().Contains("FilterDatabase")
+                                            select dataRow).CopyToDataTable();
                     dt = tempDataTable;
                     totalSheet = dt.Rows.Count;
                     sheetName = dt.Rows[0]["TABLE_NAME"].ToString();
@@ -443,7 +468,7 @@ namespace OrcaFascio
             for (int x = 0; x < array.Length; x++)
             {
                 if (x == 0)
-                    codTrf_F = array[x].PadLeft(3, '0');
+                    codTrf_F = array[x].PadLeft(2, '0');
                 else
                 {
                     codTrf_F += ".";

@@ -5,36 +5,23 @@ namespace OrcaFascio.Repository
 {
     public class ProjetoRepository : RepositoryBase<Projeto>
     {
-        
-        public override IEnumerable<Projeto> Get(Projeto param)
-        {
-            var query = @"
-                SELECT
-                CODCOLIGADA,
-                CODFILIAL,
-                IDPRJ,
-                CODPRJ,
-                DESCRICAO
-                FROM MPRJ";
-
-            return base.Get(query, param);
-        }
-
-        public IEnumerable<Projeto> GetByFilial(int codColigada, int codFilial)
+        public IEnumerable<Projeto> GetByColigada(int codColigada)
         {
 
-            Projeto projeto = new Projeto { CodColigada = codColigada, CodFilial = codFilial };
+            Projeto projeto = new Projeto { CodColigada = codColigada };
 
             var query = @"
                 SELECT
-                CODCOLIGADA,
-                CODFILIAL,
-                IDPRJ,
-                CODPRJ,
-                DESCRICAO
+                MPRJ.CODCOLIGADA,
+                MPRJ.CODFILIAL,
+                MPRJ.IDPRJ,
+                MPRJ.CODPRJ,
+                MPRJ.DESCRICAO
                 FROM MPRJ
-                WHERE MPRJ.CODCOLIGADA = @CODCOLIGADA
-                AND MPRJ.CODFILIAL = @CODFILIAL";
+                JOIN MPRJCOMPL ON MPRJCOMPL.CODCOLIGADA = MPRJ.CODCOLIGADA
+                AND MPRJCOMPL.IDPRJ = MPRJ.IDPRJ
+                WHERE MPRJ.CODCOLIGADA = @CODCOLIGADA                
+                AND MPRJCOMPL.ORCAFASCIO = '01'";
 
             return base.Get(query, projeto);
         }
@@ -46,14 +33,17 @@ namespace OrcaFascio.Repository
 
             var query = @"
                 SELECT
-                CODCOLIGADA,
-                CODFILIAL,
-                IDPRJ,
-                CODPRJ,
-                DESCRICAO
+                MPRJ.CODCOLIGADA,
+                MPRJ.CODFILIAL,
+                MPRJ.IDPRJ,
+                MPRJ.CODPRJ,
+                MPRJ.DESCRICAO
                 FROM MPRJ
+                JOIN MPRJCOMPL ON MPRJCOMPL.CODCOLIGADA = MPRJ.CODCOLIGADA
+                AND MPRJCOMPL.IDPRJ = MPRJ.IDPRJ
                 WHERE MPRJ.CODCOLIGADA = @CODCOLIGADA
-                AND MPRJ.IDPRJ = @IDPRJ";
+                AND MPRJ.IDPRJ = @IDPRJ
+                AND MPRJCOMPL.ORCAFASCIO = '01'";
 
             return base.GetById(query, projeto);
         }
@@ -64,17 +54,7 @@ namespace OrcaFascio.Repository
             string query = $@"
                 UPDATE MTAREFA SET IDPAI = 
                 CASE LEN(MTAREFA.CODTRF)
-                WHEN 3 THEN
-                (
-	                SELECT PAI.IDTRF
-	                FROM MTAREFA PAI
-	                WHERE PAI.CODCOLIGADA = MTAREFA.CODCOLIGADA 
-	                AND PAI.IDPRJ = MTAREFA.IDPRJ
-	                AND PAI.CODTRF = (
-	                    SELECT MIN(M2.CODTRF)
-	                    FROM MTAREFA M2 WHERE M2.CODCOLIGADA = PAI.CODCOLIGADA AND M2.IDPRJ = PAI.IDPRJ
-	                )
-                )
+                WHEN 3 THEN MTAREFA.IDTRF
                 ELSE
                 (
 	                SELECT PAI.IDTRF
