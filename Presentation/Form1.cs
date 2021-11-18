@@ -10,6 +10,7 @@ using OrcaFascio.Repository;
 using System.Diagnostics;
 using OrcaFascio.Service;
 using OrcaFascio.Presentation;
+using ExcelDataReader;
 
 namespace OrcaFascio
 {
@@ -83,8 +84,8 @@ namespace OrcaFascio
                     projeto.Composicoes.Clear();
                     projeto.Tarefas.Clear();
 
-                    DataTable dt = ConvertExcelToDataTable(txtCaminhoArquivoComposicoes.Text);
-                    DataTable dtOrcamento = ConvertExcelToDataTable(txtCaminhoArquivoOrcamento.Text);
+                    DataTable dt = ReadDataExcel(txtCaminhoArquivoComposicoes.Text);
+                    DataTable dtOrcamento = ReadDataExcel(txtCaminhoArquivoOrcamento.Text);
                     Composicao composicaoPrincipal = null;
 
                     //Planilha Composicoes
@@ -408,37 +409,20 @@ namespace OrcaFascio
             }
         }
 
-        public static DataTable ConvertExcelToDataTable(string FileName)
+        public DataTable ReadDataExcel(string filepath)
         {
-            DataTable dtResult = null;
-            int totalSheet = 0; //No of sheets on excel file  
-
-            using (OleDbConnection objConn = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + FileName + ";Extended Properties='Excel 12.0;HDR=No;IMEX=1;';"))
+            FileStream stream = File.Open(filepath, FileMode.Open, FileAccess.Read);
+            IExcelDataReader excelReader = ExcelReaderFactory.CreateOpenXmlReader(stream);
+            var result = excelReader.AsDataSet(new ExcelDataSetConfiguration()
             {
-                objConn.Open();
-                OleDbCommand cmd = new OleDbCommand();
-                OleDbDataAdapter oleda = new OleDbDataAdapter();
-                DataSet ds = new DataSet();
-                DataTable dt = objConn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
-                string sheetName = string.Empty;
-                if (dt != null)
+                ConfigureDataTable = (_) => new ExcelDataTableConfiguration()
                 {
-                    var tempDataTable = (from dataRow in dt.AsEnumerable()
-                                            where !dataRow["TABLE_NAME"].ToString().Contains("FilterDatabase")
-                                            select dataRow).CopyToDataTable();
-                    dt = tempDataTable;
-                    totalSheet = dt.Rows.Count;
-                    sheetName = dt.Rows[0]["TABLE_NAME"].ToString();
+                    UseHeaderRow = false
                 }
-                cmd.Connection = objConn;
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
-                oleda = new OleDbDataAdapter(cmd);
-                oleda.Fill(ds, "excelData");
-                dtResult = ds.Tables["excelData"];
-                objConn.Close();
-                return dtResult; //Returning Dattable  
-            }
+            });
+            DataTable dt = new DataTable();
+            dt = result.Tables[0];
+            return dt;
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)

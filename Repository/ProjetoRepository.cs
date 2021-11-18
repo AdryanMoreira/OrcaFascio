@@ -111,7 +111,9 @@ namespace OrcaFascio.Repository
 
                             DELETE from MISM WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-                            DELETE MISMPRC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;";
+                            DELETE MISMPRC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+
+                            UPDATE MPRJ SET VALORBDI = NULL, VALORPROJETOSEMBDI= NULL, ULTIMOCALCULO = NULL, VALORPROJETO = NULL WHERE  CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ";
 
                         i = conexao.Execute(query, param, transaction: transaction);
 
