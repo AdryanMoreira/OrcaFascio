@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using Dapper;
 using OrcaFascio.Entity;
 
 namespace OrcaFascio.Repository
@@ -74,33 +77,55 @@ namespace OrcaFascio.Repository
 
         public int LimparProjeto(Projeto param)
         {
+            SqlTransaction transaction = null;
+            int i = 0;
 
-            string query = $@"
-            DELETE MTRFCOMPL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+            try
+            {
+                using (conexao = new SqlConnection(ConnectionString))
+                {
+                    conexao.Open();
 
-            DELETE MTRFDESC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                    using (transaction = conexao.BeginTransaction())
+                    {
+                        string query = $@"
+                            DELETE MTRFCOMPL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            UPDATE MTAREFA SET IDPAI = NULL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            DELETE MTRFDESC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE MTAREFA WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            UPDATE MTAREFA SET IDPAI = NULL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE FROM MCMPCOMPL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            DELETE MTAREFA WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE FROM MRECCMP WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            DELETE FROM MCMPCOMPL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE FROM MCMP WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            DELETE FROM MRECCMP WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            UPDATE MISMPRC set IDISM = NULL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            DELETE FROM MCMP WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE FROM MISMCOMPL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            UPDATE MISMPRC set IDISM = NULL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE from MISMDESC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            DELETE FROM MISMCOMPL WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE from MISM WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
+                            DELETE from MISMDESC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            DELETE MISMPRC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;";
+                            DELETE from MISM WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;
 
-            return base.Update(query, param);
+                            DELETE MISMPRC WHERE CODCOLIGADA = @CODCOLIGADA AND IDPRJ = @IDPRJ;";
+
+                        i = conexao.Execute(query, param, transaction: transaction);
+
+                        transaction.Commit();
+
+                        return i;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                throw ex;
+            }
         }
     }
 }
