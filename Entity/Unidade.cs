@@ -27,8 +27,6 @@ namespace OrcaFascio.Entity
         public override string ToString()
         {
             return CodUnd + " - " + Descricao;
-            return CodUnd + " - " + Descricao2;
-            return CodUnd + " - " + Descricao4;
         }
     }
 }
