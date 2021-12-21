@@ -7,6 +7,7 @@ namespace OrcaFascio.Service
 {
     public class ComposicaoService : ServiceBase<Composicao>
     {
+        
         private readonly ComposicaoRepository Repository;
         private readonly AutoincrementoService AutoincrementoService;
 
@@ -21,7 +22,6 @@ namespace OrcaFascio.Service
             composicao.IdCmp = AutoincrementoService.ObterValorAtualEAtualizar(Autoincremento.COMPOSICAO).ValAutoInc;
 
             return Repository.Add(composicao);
-            
         }
     }
 }
