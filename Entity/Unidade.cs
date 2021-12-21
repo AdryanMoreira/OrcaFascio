@@ -28,7 +28,6 @@ namespace OrcaFascio.Entity
         {
             return CodUnd + " - " + Descricao;
             return CodUnd + " - " + Descricao2;
-            return CodUnd + " - " + Descricao3;
         }
     }
 }
