@@ -7,6 +7,7 @@ namespace OrcaFascio.Service
 {
     public class ComposicaoService : ServiceBase<Composicao>
     {
+        
         private readonly ComposicaoRepository Repository;
         private readonly AutoincrementoService AutoincrementoService;
 

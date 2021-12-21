@@ -33,6 +33,7 @@ namespace OrcaFascio
         TarefaRepository tarefaRepository;
         TarefaService tarefaService;
         StringBuilder log = new StringBuilder();
+        StringBuilder log2 = new StringBuilder();
 
         public Form1()
         {
