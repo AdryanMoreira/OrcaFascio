@@ -21,6 +21,7 @@ namespace OrcaFascio.Service
             composicao.IdCmp = AutoincrementoService.ObterValorAtualEAtualizar(Autoincremento.COMPOSICAO).ValAutoInc;
 
             return Repository.Add(composicao);
+            
         }
     }
 }
